@@ -33,11 +33,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const recipientEmail = 'kotharimeet826@gmail.com';
+    const recipientEmail = 'meetkothari826@gmail.com';
 
     try {
       const response = await resend.emails.send({
-        from: 'Tripli <noreply@tripli.dev>',
+        from: 'Tripli <onboarding@resend.dev>',
         to: recipientEmail,
         replyTo: email,
         subject: `New Contact Form Submission: ${subject}`,
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       if (response.error) {
         console.error('Resend API error:', response.error);
         return NextResponse.json(
-          { error: 'Failed to send email. Please try again later.' },
+          { error: `Email error: ${response.error.message || 'Failed to send email'}` },
           { status: 500 }
         );
       }
