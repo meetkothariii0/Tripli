@@ -25,10 +25,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if API key is configured
-    if (!process.env.RESEND_API_KEY) {
-      console.error('RESEND_API_KEY is not configured');
+    if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY.includes('PLACEHOLDER')) {
+      console.error('RESEND_API_KEY is not configured or is using placeholder');
       return NextResponse.json(
-        { error: 'Email service is not configured. Please contact us directly.' },
+        { error: 'Email service is not configured. Please add a valid Resend API key to .env.local' },
         { status: 500 }
       );
     }
