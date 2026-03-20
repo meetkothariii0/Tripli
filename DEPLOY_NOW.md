@@ -1,6 +1,10 @@
-# 🚀 TRIPLI - READY FOR DEPLOYMENT
+# 🚀 TRIPLI - LIVE & READY
 
-## Project Status: ✅ COMPLETE & TESTED
+## ✅ Project Status: LIVE IN PRODUCTION
+
+**🎉 Live App:** https://tripli-kappa.vercel.app
+
+## ✅ PRODUCTION CHECKLIST: COMPLETE & TESTED
 
 ### What We Built:
 - ✅ **Tripli** - AI-powered trip planner with Pixabay image integration

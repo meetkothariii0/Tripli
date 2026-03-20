@@ -2,9 +2,12 @@
 
 An intelligent travel planning application powered by AI that generates personalized trip itineraries, hotel recommendations, restaurant suggestions, and day-by-day activities with beautiful images.
 
+🚀 **[Live Demo: https://tripli-kappa.vercel.app](https://tripli-kappa.vercel.app)**
+
 ![Tripli](https://img.shields.io/badge/Status-Production%20Ready-green)
 ![License](https://img.shields.io/badge/License-MIT-blue)
-![Next.js](https://img.shields.io/badge/Next.js-15.4.5-black)
+![Next.js](https://img.shields.io/badge/Next.js-15.5.0-black)
+![Live](https://img.shields.io/badge/Live-Vercel-blue)
 
 ---
 
