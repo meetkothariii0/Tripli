@@ -51,9 +51,9 @@ export default function GetInspired() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-linear-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white">
+      <div className="bg-linear-to-r from-green-500 to-teal-500 text-white">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <button
             onClick={() => router.back()}

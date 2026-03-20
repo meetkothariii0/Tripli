@@ -120,7 +120,7 @@ function TripDetailsContent() {
       {/* Daily Itinerary */}
       {tripDetails.itinerary &&
         Object.entries(tripDetails.itinerary).map(([dayNum, dayPlan], idx) => (
-          <div key={dayNum} className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-6 mb-6 shadow-md">
+          <div key={dayNum} className="bg-linear-to-r from-orange-50 to-orange-100 rounded-xl p-6 mb-6 shadow-md">
             <h3 className="text-xl font-bold text-orange-600 mb-3">
               Day {idx + 1}: <span className="font-normal">{dayPlan.day_title}</span>
             </h3>

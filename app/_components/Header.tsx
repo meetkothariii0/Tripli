@@ -17,12 +17,12 @@ function Header() {
 
   
   return (
-    <div className='relative flex justify-between items-center p-4 bg-gradient-to-r from-white to-blue-50 border-b border-blue-100 shadow-sm'>
+    <div className='relative flex justify-between items-center p-4 bg-linear-to-r from-white to-blue-50 border-b border-blue-100 shadow-sm'>
       <div className="flex gap-2 items-center cursor-pointer">
-        <div className="p-2 bg-gradient-to-br from-blue-600 to-teal-600 rounded-lg">
+        <div className="p-2 bg-linear-to-br from-blue-600 to-teal-600 rounded-lg">
           <Compass className="w-6 h-6 text-white" />
         </div>
-        <h1 className="font-bold text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Tripli</h1>
+        <h1 className="font-bold text-2xl bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Tripli</h1>
       </div>
 
       {/* Centered nav links */}

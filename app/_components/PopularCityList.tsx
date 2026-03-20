@@ -64,7 +64,7 @@ export function Card({ card, index }: CardProps) {
         />
         {/* Overlay on hover */}
         <div className={cn(
-          'absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent transition-opacity duration-300',
+          'absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent transition-opacity duration-300',
           isHovered ? 'opacity-60' : 'opacity-0'
         )}></div>
       </div>
