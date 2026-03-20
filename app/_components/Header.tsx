@@ -7,7 +7,6 @@ import { SignInButton, useUser } from '@clerk/nextjs';
 
 const menuOptions = [
   { name: 'Home', path: '/' },
-  { name: 'Pricing', path: '/pricing' },
   { name: 'Contact Us', path: '/contact-us' },
 ];
 

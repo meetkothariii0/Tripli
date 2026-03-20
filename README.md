@@ -149,7 +149,6 @@ tripli/
 │   │       ├── MapComponent.tsx       # Destination map
 │   │       └── ...other UI components
 │   ├── trip-details/page.tsx          # Trip itinerary display
-│   ├── pricing/page.tsx               # Pricing page
 │   ├── contact-us/page.tsx            # Contact form
 │   └── layout.tsx                     # Root layout
 ├── components/

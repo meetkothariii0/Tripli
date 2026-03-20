@@ -11,7 +11,6 @@
 - ✅ Groq AI for intelligent trip recommendations  
 - ✅ Convex database for storing trip details
 - ✅ Clerk authentication (Google OAuth)
-- ✅ Pricing page with 3 subscription tiers
 - ✅ Contact page with contact form
 - ✅ Hotels, Restaurants, and Activity recommendations with HIGH-QUALITY IMAGES
 - ✅ 5-day itinerary planning

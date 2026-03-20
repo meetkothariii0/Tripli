@@ -169,7 +169,6 @@ npm run dev
 - Saving trips to Convex
 
 ### 🔮 Not Yet Implemented:
-- Pricing page (/pricing)
 - Contact us page (/contact-us)
 - User profile page
 - Trip history
@@ -188,9 +187,8 @@ npm run dev
 3. Confirm trip details page displays correctly
 
 ### Phase 3 (Supporting Pages):
-1. Create `/pricing` page with subscription tiers
-2. Create `/contact-us` page
-3. Update header navigation links
+1. Create `/contact-us` page
+2. Update header navigation links
 
 ### Phase 4 (User Features):
 1. Build user profile page
