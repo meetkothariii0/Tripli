@@ -48,7 +48,6 @@ type CardProps = {
 };
 
 export function Card({ card, index }: CardProps) {
-  const [isLoading, setLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -61,11 +60,7 @@ export function Card({ card, index }: CardProps) {
         <img
           src={card.src}
           alt={card.title}
-          onLoad={() => setLoading(false)}
-          className={cn(
-            'w-full h-full object-cover transition duration-500 group-hover:scale-110',
-            isLoading ? 'blur-sm' : 'blur-0'
-          )}
+          className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
         />
         {/* Overlay on hover */}
         <div className={cn(
