@@ -14,7 +14,7 @@ export const CreateNewUser = mutation({
       name: args.name,
       imageUrl: args.imageUrl,
       email: args.email,
-      subscription: args.subscription ?? null,
+      subscription: args.subscription,
     });
   }
 });
