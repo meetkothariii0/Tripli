@@ -437,6 +437,12 @@ function ChatBox() {
 						placeholder='Start typing here...'
 						className='w-full h-28 bg-transparent border-none focus-visible:ring-0 resize-none'
 						onChange={(event) => setUserInput(event.target.value ?? '')}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter' && !e.shiftKey) {
+								e.preventDefault();
+								onSend();
+							}
+						}}
 						value={userInput}
 					/>
 					<Button

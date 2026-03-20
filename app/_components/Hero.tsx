@@ -29,8 +29,14 @@ export default function Hero() {
     //Navigate to create trip planner web page
 
   return (
-    <div className="flex items-center justify-center min-h-[70vh]">
-      <div className="text-center max-w-3xl w-full space-y-6">
+    <div className="flex items-center justify-center min-h-[70vh] relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-20 -left-20 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 float-animation"></div>
+        <div className="absolute -bottom-8 right-20 w-72 h-72 bg-teal-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 float-animation" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 float-animation" style={{animationDelay: '4s'}}></div>
+      </div>
+      <div className="text-center max-w-3xl w-full space-y-6 relative z-10">
         <h2 className="md:text-5xl text-3xl font-bold whitespace-nowrap">
           Your travel companion for the perfect <span className="text-primary">journey</span>
         </h2>
@@ -80,3 +86,4 @@ export default function Hero() {
     </div>
   );
 }
+

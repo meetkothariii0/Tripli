@@ -49,20 +49,32 @@ type CardProps = {
 
 export function Card({ card, index }: CardProps) {
   const [isLoading, setLoading] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div className="rounded-xl overflow-hidden shadow-lg bg-white dark:bg-gray-900">
-      <img
-        src={card.src}
-        alt={card.title}
-        onLoad={() => setLoading(false)}
-        className={cn(
-          'h-64 w-full object-cover transition duration-300',
-          isLoading ? 'blur-sm' : 'blur-0'
-        )}
-      />
+    <div 
+      className="rounded-xl overflow-hidden shadow-lg bg-white dark:bg-gray-900 city-card cursor-pointer group"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="relative overflow-hidden h-64">
+        <img
+          src={card.src}
+          alt={card.title}
+          onLoad={() => setLoading(false)}
+          className={cn(
+            'w-full h-full object-cover transition duration-500 group-hover:scale-110',
+            isLoading ? 'blur-sm' : 'blur-0'
+          )}
+        />
+        {/* Overlay on hover */}
+        <div className={cn(
+          'absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent transition-opacity duration-300',
+          isHovered ? 'opacity-60' : 'opacity-0'
+        )}></div>
+      </div>
       <div className="p-4">
-        <h3 className="font-bold text-xl text-neutral-800 dark:text-neutral-100">{card.title}</h3>
+        <h3 className="font-bold text-xl text-neutral-800 dark:text-neutral-100 group-hover:text-blue-600 transition-colors duration-300">{card.title}</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">{card.description}</p>
       </div>
     </div>
@@ -72,22 +84,22 @@ export function Card({ card, index }: CardProps) {
 export default function PopularCityList() {
   const cards = [
     {
-      src: 'https://source.unsplash.com/800x600/?delhi',
+      src: 'https://images.pexels.com/photos/3915857/pexels-photo-3915857.jpeg?auto=compress&cs=tinysrgb&w=600',
       title: 'Delhi',
-      description: 'Explore the capital’s heritage and street food.',
+      description: "Explore the capital's heritage and street food.",
     },
     {
-      src: 'https://source.unsplash.com/800x600/?mumbai',
+      src: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?auto=compress&cs=tinysrgb&w=600',
       title: 'Mumbai',
       description: 'The city of dreams and the Arabian Sea.',
     },
     {
-      src: 'https://source.unsplash.com/800x600/?bangalore',
+      src: 'https://images.pexels.com/photos/2398220/pexels-photo-2398220.jpeg?auto=compress&cs=tinysrgb&w=600',
       title: 'Bangalore',
       description: 'Tech hub with beautiful gardens.',
     },
     {
-      src: 'https://source.unsplash.com/800x600/?kolkata',
+      src: 'https://images.pexels.com/photos/4552949/pexels-photo-4552949.jpeg?auto=compress&cs=tinysrgb&w=600',
       title: 'Kolkata',
       description: 'Culture, art, and colonial charm.',
     },
