@@ -60,7 +60,25 @@ export default function Hero() {
         {/* Suggestion Section in Horizontal Row */}
         <div className="flex justify-center gap-6 mt-4 flex-wrap">
           {suggestions.map((suggestion, index) => (
-            <div key={index} className="flex items-center gap-2 border rounded-full p-2 cursor-pointer hover:bg-primary  hover:text-white">
+            <div 
+              key={index} 
+              className="flex items-center gap-2 border rounded-full p-2 cursor-pointer hover:bg-primary hover:text-white transition-all duration-300"
+              onClick={() => {
+                if (suggestion.title === 'Start Planning') {
+                  if (!user) {
+                    router.push('/sign-in');
+                  } else {
+                    router.push('/create-new-trip');
+                  }
+                } else if (suggestion.title === 'Get Inspired') {
+                  router.push('/get-inspired');
+                } else if (suggestion.title === 'Hidden Gems') {
+                  router.push('/hidden-gems');
+                } else if (suggestion.title === 'Adventure Ideas') {
+                  router.push('/adventure-ideas');
+                }
+              }}
+            >
               {suggestion.icon}
               <span className="text-md">{suggestion.title}</span>
             </div>
