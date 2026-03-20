@@ -28,6 +28,7 @@ function Provider({
         email: user.primaryEmailAddress?.emailAddress ?? '',
         imageUrl: user.imageUrl,
         name: user.fullName ?? '',
+        subscription: 'free',
       });
     }
   }, [user, existingUser, createUser]);
