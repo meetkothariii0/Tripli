@@ -84,22 +84,22 @@ export function Card({ card, index }: CardProps) {
 export default function PopularCityList() {
   const cards = [
     {
-      src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/India_Gate_profile.jpg/1200px-India_Gate_profile.jpg',
+      src: 'https://www.knowledgeglow.com/wp-content/uploads/2022/01/When-And-Why-Was-India-Gate-Built-1-1024x439.jpg',
       title: 'Delhi',
       description: "Explore India's capital with the iconic India Gate.",
     },
     {
-      src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/SeaLink_evening.jpg/1280px-SeaLink_evening.jpg',
+      src: 'https://i.pinimg.com/originals/d3/01/d1/d301d1977f9204899fab5d6a22d757e0.png',
       title: 'Mumbai',
       description: 'Experience the city of dreams with the stunning Sea Link.',
     },
     {
-      src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Bangalore_Vidhana_Soudha.JPG/1280px-Bangalore_Vidhana_Soudha.JPG',
+      src: 'https://tse4.mm.bing.net/th/id/OIP.pSDtCeFJeCMEFwrekjac-wHaEK?pid=Api&P=0&h=180',
       title: 'Bangalore',
       description: 'Discover the IT hub with charming cafes and gardens.',
     },
     {
-      src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Howrah_Bridge_1.jpg/1280px-Howrah_Bridge_1.jpg',
+      src: 'https://tse1.mm.bing.net/th/id/OIP.QYpibO_JZz_29XHJoTA23wHaDt?pid=Api&P=0&h=180',
       title: 'Kolkata',
       description: "Feel the city of joy with the historic Howrah Bridge.",
     },
