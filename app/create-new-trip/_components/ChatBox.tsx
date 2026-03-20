@@ -13,7 +13,7 @@ import TripTypeUi from './TripTypeUi';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useUserDetail } from '@/app/Provider';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid'; // Modern UUID v4 generator
 
 type Message = {
 	role: string;
