@@ -84,24 +84,24 @@ export function Card({ card, index }: CardProps) {
 export default function PopularCityList() {
   const cards = [
     {
-      src: 'https://images.pexels.com/photos/3915857/pexels-photo-3915857.jpeg?auto=compress&cs=tinysrgb&w=600',
+      src: 'https://images.pexels.com/photos/3856058/pexels-photo-3856058.jpeg?auto=compress&cs=tinysrgb&w=800',
       title: 'Delhi',
-      description: "Explore the capital's heritage and street food.",
+      description: "Explore India's capital with stunning monuments and vibrant culture.",
     },
     {
-      src: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?auto=compress&cs=tinysrgb&w=600',
+      src: 'https://images.pexels.com/photos/3155666/pexels-photo-3155666.jpeg?auto=compress&cs=tinysrgb&w=800',
       title: 'Mumbai',
-      description: 'The city of dreams and the Arabian Sea.',
+      description: 'Experience the city of dreams with beaches and Bollywood magic.',
     },
     {
-      src: 'https://images.pexels.com/photos/2398220/pexels-photo-2398220.jpeg?auto=compress&cs=tinysrgb&w=600',
+      src: 'https://images.pexels.com/photos/3714896/pexels-photo-3714896.jpeg?auto=compress&cs=tinysrgb&w=800',
       title: 'Bangalore',
-      description: 'Tech hub with beautiful gardens.',
+      description: 'Discover the IT hub with gardens, tech scene, and modern vibes.',
     },
     {
-      src: 'https://images.pexels.com/photos/4552949/pexels-photo-4552949.jpeg?auto=compress&cs=tinysrgb&w=600',
+      src: 'https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg?auto=compress&cs=tinysrgb&w=800',
       title: 'Kolkata',
-      description: 'Culture, art, and colonial charm.',
+      description: "Feel the city of joy with heritage, culture, and artistic charm.",
     },
   ];
 
