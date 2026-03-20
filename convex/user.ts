@@ -9,7 +9,7 @@ export const CreateNewUser = mutation({
     email: v.string(),
     subscription: v.optional(v.string()),
   },
-  handler: async (ctx: { db: { insert: (arg0: string, arg1: { name: any; imageUrl: any; email: any; subscription: any; }) => any; }; }, args: { name: any; imageUrl: any; email: any; subscription: any; }) => {
+  handler: async (ctx, args) => {
     await ctx.db.insert("UserTable", {
       name: args.name,
       imageUrl: args.imageUrl,
@@ -24,7 +24,7 @@ export const getUserByEmail = query({
   args: {
     email: v.string(),
   },
-  handler: async (ctx: { db: { query: (arg0: string) => { (): any; new(): any; filter: { (arg0: (q: any) => any): { (): any; new(): any; collect: { (): any; new(): any; }; }; new(): any; }; }; }; }, args: { email: any; }) => {
+  handler: async (ctx, args) => {
     const users = await ctx.db
       .query("UserTable")
       .filter(q => q.eq(q.field("email"), args.email))
