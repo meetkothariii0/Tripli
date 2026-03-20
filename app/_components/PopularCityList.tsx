@@ -84,24 +84,24 @@ export function Card({ card, index }: CardProps) {
 export default function PopularCityList() {
   const cards = [
     {
-      src: 'https://images.pexels.com/photos/3714896/pexels-photo-3714896.jpeg?auto=compress&cs=tinysrgb&w=800',
+      src: 'https://images.unsplash.com/photo-1580180675321-eb5e6c0c5c5c?auto=format&fit=crop&w=800&q=80',
       title: 'Delhi',
-      description: "Explore India's capital with stunning monuments and vibrant culture.",
+      description: "Explore India's capital with the iconic India Gate.",
     },
     {
-      src: 'https://images.pexels.com/photos/2398220/pexels-photo-2398220.jpeg?auto=compress&cs=tinysrgb&w=800',
+      src: 'https://images.unsplash.com/photo-1561353511-2be1dfa2d650?auto=format&fit=crop&w=800&q=80',
       title: 'Mumbai',
-      description: 'Experience the city of dreams with beaches and Bollywood magic.',
+      description: 'Experience the city of dreams with the stunning Sea Link.',
     },
     {
-      src: 'https://images.pexels.com/photos/3769999/pexels-photo-3769999.jpeg?auto=compress&cs=tinysrgb&w=800',
+      src: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=800&q=80',
       title: 'Bangalore',
-      description: 'Discover the IT hub with gardens, tech scene, and modern vibes.',
+      description: 'Discover the IT hub with charming cafes and gardens.',
     },
     {
-      src: 'https://images.pexels.com/photos/3915857/pexels-photo-3915857.jpeg?auto=compress&cs=tinysrgb&w=800',
+      src: 'https://images.unsplash.com/photo-1589390065896-e51b99f21d18?auto=format&fit=crop&w=800&q=80',
       title: 'Kolkata',
-      description: "Feel the city of joy with heritage, culture, and artistic charm.",
+      description: "Feel the city of joy with the historic Howrah Bridge.",
     },
   ];
 
