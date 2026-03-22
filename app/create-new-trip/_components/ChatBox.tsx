@@ -119,7 +119,7 @@ function ChatBox() {
 
 	type TripType = 'Adventure' | 'Sightseeing' | 'Cultural' | 'Relaxation' | 'Shopping' | 'Food Tour';
 
-	// Define the conversation flow with fixed order
+	// Define the conversation flow with fixed order - Must match API prompts exactly to prevent repetition
 	const conversationSteps = [
 		{ 
 			step: 1,
@@ -135,25 +135,25 @@ function ChatBox() {
 		},
 		{ 
 			step: 3,
-			question: "How many people will be traveling?", 
+			question: "Who will be joining you on this trip?", 
 			ui: "groupSize",
 			field: 'group_size'
 		},
 		{ 
 			step: 4,
-			question: "What's your budget per person?", 
-			ui: "budget",
-			field: 'budget'
-		},
-		{ 
-			step: 5,
-			question: "How many days do you have?", 
+			question: "How many days will your trip be?", 
 			ui: "tripDuration",
 			field: 'duration'
 		},
 		{ 
+			step: 5,
+			question: "What's your budget range for this trip?", 
+			ui: "budget",
+			field: 'budget'
+		},
+		{ 
 			step: 6,
-			question: "What type of trip would you like to plan?", 
+			question: "What type of activities do you like?", 
 			ui: "tripType",
 			field: 'trip_type'
 		},

@@ -234,8 +234,14 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    // Build prompt with information about already-answered fields
+    const answeredFieldsList = Array.from(answeredFields).join(", ") || "none";
+    const systemPrompt = isFinal 
+      ? FINAL_PROMPT 
+      : PROMPT + `\n\nAlready answered fields: ${answeredFieldsList}. DO NOT ask about these fields again.`;
+
     const groqMessages: ChatMessage[] = [
-      { role: "system", content: isFinal ? FINAL_PROMPT : PROMPT },
+      { role: "system", content: systemPrompt },
       ...messages
         .filter((m: any) => m.role === "user" || m.role === "assistant")
         .map((m: any) => ({ role: m.role, content: String(m.content) })),
