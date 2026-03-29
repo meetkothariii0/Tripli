@@ -30,10 +30,15 @@ function MyTrips() {
   const { isLoaded, isSignedIn } = useUser();
   const { user: userDetails } = useUserDetail();
 
+  console.log('MyTrips - User Details:', userDetails);
+  console.log('MyTrips - User ID being used:', userDetails?._id);
+
   const trips = useQuery(
     api.TripDetail.getUserTrips,
-    userDetails?.id ? { uid: userDetails.id } : 'skip'
+    userDetails?._id ? { uid: userDetails._id } : 'skip'
   ) as Trip[] | undefined;
+
+  console.log('MyTrips - Fetched Trips:', trips);
 
   if (!isLoaded) {
     return (

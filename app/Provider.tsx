@@ -33,8 +33,16 @@ function Provider({
     }
   }, [user, existingUser, createUser]);
 
+  // Update userDetail with the existing user (from Convex) when it loads
+  useEffect(() => {
+    if (existingUser) {
+      console.log('Provider - User from Convex:', existingUser);
+      setUserDetail(existingUser);
+    }
+  }, [existingUser]);
+
   return (
-    <UserDetailContext.Provider value={{userDetail, setUserDetail}}>
+    <UserDetailContext.Provider value={{user: userDetail, setUserDetail}}>
     <div>
       <Header />
       {children}

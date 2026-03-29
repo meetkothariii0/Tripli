@@ -250,11 +250,11 @@ function ChatBox() {
 					const tripId = uuidv4();
 
 					// Save trip details if user is logged in
-					if (userDetails?.id) {
+					if (userDetails?._id) {
 						await SaveTripDetail({
 							tripDetail: finalResult.data.trip_plan,
 							tripId: tripId,
-							uid: userDetails.id
+							uid: userDetails._id
 						});
 						console.log('Trip details saved successfully');
 					} else {
