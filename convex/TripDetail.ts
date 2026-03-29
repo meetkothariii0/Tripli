@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, MutationCtx } from "./_generated/server";
+import { mutation, MutationCtx, query, QueryCtx } from "./_generated/server";
 import { Doc } from "./_generated/dataModel";
 
 export const CreateTripDetail = mutation({
@@ -15,5 +15,23 @@ export const CreateTripDetail = mutation({
       tripId: args.tripId
     });
     return result;
+  }
+});
+
+export const getUserTrips = query({
+  args: {
+    uid: v.id("UserTable")
+  },
+  handler: async (ctx: QueryCtx, args: { uid: Doc<"UserTable">["_id"] }) => {
+    const trips = await ctx.db
+      .query("TripDetailTable")
+      .filter(q => q.eq(q.field("uid"), args.uid))
+      .collect();
+    
+    return trips.sort((a, b) => {
+      const aTime = a._creationTime || 0;
+      const bTime = b._creationTime || 0;
+      return bTime - aTime; // Sort by most recent first
+    });
   }
 });

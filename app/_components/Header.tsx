@@ -5,13 +5,19 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SignInButton, useUser } from '@clerk/nextjs';
 
-const menuOptions = [
+const baseMenuOptions = [
   { name: 'Home', path: '/' },
   { name: 'Contact Us', path: '/contact-us' },
 ];
 
+const authenticatedMenuOptions = [
+  ...baseMenuOptions,
+  { name: 'My Trips', path: '/my-trips' },
+];
+
 function Header() {
   const{user} = useUser();
+  const menuOptions = user ? authenticatedMenuOptions : baseMenuOptions;
 
 
   
