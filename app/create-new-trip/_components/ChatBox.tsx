@@ -115,6 +115,9 @@ function ChatBox() {
 	const [tripDetails, setTripDetails] = useState<TripInfo | null>(null);
 	const [currentStep, setCurrentStep] = useState<number>(0);
 	const SaveTripDetail = useMutation(api.TripDetail.CreateTripDetail);
+	const CreateHotels = useMutation(api.TripDetail.CreateHotels);
+	const CreateItinerary = useMutation(api.TripDetail.CreateItinerary);
+	const CreateCafes = useMutation(api.TripDetail.CreateCafes);
 	const { user: userDetails } = useUserDetail();
 
 	type TripType = 'Adventure' | 'Sightseeing' | 'Cultural' | 'Relaxation' | 'Shopping' | 'Food Tour';
@@ -257,6 +260,71 @@ function ChatBox() {
 							uid: userDetails._id
 						});
 						console.log('Trip details saved successfully');
+
+						// Extract and save hotels
+						if (finalResult.data.trip_plan.hotels && Array.isArray(finalResult.data.trip_plan.hotels)) {
+							const hotelsData = finalResult.data.trip_plan.hotels.map((hotel: any) => ({
+								hotelName: hotel.hotel_name || '',
+								location: hotel.hotel_address || '',
+								mapLink: hotel.google_maps_link || '',
+								pricePerNight: parseFloat(hotel.price_per_night) || 0,
+								rating: hotel.rating || undefined,
+								description: hotel.description || undefined
+							}));
+							
+							await CreateHotels({
+								tripId: tripId,
+								uid: userDetails._id,
+								hotels: hotelsData
+							});
+							console.log('Hotels saved successfully');
+						}
+
+						// Extract and save itinerary
+						if (finalResult.data.trip_plan.itinerary && typeof finalResult.data.trip_plan.itinerary === 'object') {
+							const itineraryArray: any[] = [];
+							for (const [dayKey, dayData] of Object.entries(finalResult.data.trip_plan.itinerary)) {
+								const dayObj = dayData as any;
+								const dayNumber: number = parseInt(dayKey.replace('day_', '')) || itineraryArray.length + 1;
+								
+								itineraryArray.push({
+									dayNumber,
+									dayTitle: dayObj.day_title || '',
+									activities: Array.isArray(dayObj.activities) 
+										? dayObj.activities.map((act: any) => act.place_name || '')
+										: [],
+									recommendedTransport: dayObj.recommended_transport || undefined,
+									tips: Array.isArray(dayObj.tips) ? dayObj.tips.join(', ') : dayObj.tips || undefined
+								});
+							}
+
+							if (itineraryArray.length > 0) {
+								await CreateItinerary({
+									tripId: tripId,
+									uid: userDetails._id,
+									itinerary: itineraryArray
+								});
+								console.log('Itinerary saved successfully');
+							}
+						}
+
+						// Extract and save cafes
+						if (finalResult.data.trip_plan.cafes && Array.isArray(finalResult.data.trip_plan.cafes)) {
+							const cafesData = finalResult.data.trip_plan.cafes.map((cafe: any) => ({
+								cafeName: cafe.cafe_name || '',
+								location: cafe.location || '',
+								mapLink: cafe.google_maps_link || '',
+								cuisine: cafe.specialty || cafe.cuisine || undefined,
+								description: cafe.description || undefined
+							}));
+							
+							await CreateCafes({
+								tripId: tripId,
+								uid: userDetails._id,
+								cafes: cafesData
+							});
+							console.log('Cafes saved successfully');
+						}
 					} else {
 						console.warn('User not logged in. Trip details will not be saved.');
 					}

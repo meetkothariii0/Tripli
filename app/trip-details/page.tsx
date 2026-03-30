@@ -2,6 +2,8 @@
 
 import { useSearchParams } from "next/navigation";
 import React, { Suspense } from "react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 type Restaurant = {
   name: string;
@@ -72,9 +74,16 @@ type TripDetails = {
 function TripDetailsContent() {
   const searchParams = useSearchParams();
   const tripData = searchParams.get("data");
+  const tripId = searchParams.get("tripId");
+  
   const tripDetails: TripDetails | null = tripData
     ? JSON.parse(decodeURIComponent(tripData))
     : null;
+
+  // Fetch normalized data if tripId is available
+  const normalizedHotels = useQuery(api.TripDetail.GetTripHotels, tripId ? { tripId } : "skip") ?? [];
+  const normalizedItinerary = useQuery(api.TripDetail.GetTripItinerary, tripId ? { tripId } : "skip") ?? [];
+  const normalizedCafes = useQuery(api.TripDetail.GetTripCafes, tripId ? { tripId } : "skip") ?? [];
 
   if (!tripDetails) {
     return (
@@ -169,33 +178,56 @@ function TripDetailsContent() {
         ))}
 
       {/* Hotels */}
-      {tripDetails.hotels && tripDetails.hotels.length > 0 && (
+      {(normalizedHotels.length > 0 || (tripDetails?.hotels && tripDetails.hotels.length > 0)) && (
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-orange-500 mb-4">Recommended Hotels</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {tripDetails.hotels.map((hotel, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-                {hotel.hotel_image_url ? (
-                  <img src={hotel.hotel_image_url} alt={hotel.hotel_name} className="w-full h-48 object-cover" />
-                ) : (
-                  <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                )}
-                <div className="p-6 flex-1 flex flex-col justify-between">
-                  <h3 className="font-bold text-xl">{hotel.hotel_name}</h3>
-                  <p className="text-gray-600">{hotel.hotel_address}</p>
-                  <p className="text-orange-600 font-semibold">{hotel.price_per_night}</p>
-                  {hotel.rating && (
-                    <div className="flex items-center">
-                      <span className="text-yellow-400">★</span>
-                      <span className="ml-1">{hotel.rating}/5</span>
+            {normalizedHotels.length > 0
+              ? normalizedHotels.map((hotel: any, index: number) => (
+                  <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
+                    <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center text-gray-400 text-xs">Hotel Image</div>
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <h3 className="font-bold text-xl">{hotel.hotelName}</h3>
+                      <p className="text-gray-600">{hotel.location}</p>
+                      <p className="text-orange-600 font-semibold">${hotel.pricePerNight}/night</p>
+                      {hotel.rating && (
+                        <div className="flex items-center">
+                          <span className="text-yellow-400">★</span>
+                          <span className="ml-1">{hotel.rating}/5</span>
+                        </div>
+                      )}
+                      {hotel.description && (
+                        <p className="text-gray-600 text-sm mt-2">{hotel.description}</p>
+                      )}
+                      {hotel.mapLink && (
+                        <a href={hotel.mapLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm mt-2">📍 View on Google Maps</a>
+                      )}
                     </div>
-                  )}
-                  {hotel.google_maps_link && (
-                    <a href={hotel.google_maps_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm mt-2">View Hotel on Google Maps</a>
-                  )}
-                </div>
-              </div>
-            ))}
+                  </div>
+                ))
+              : tripDetails?.hotels?.map((hotel, index) => (
+                  <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
+                    {hotel.hotel_image_url ? (
+                      <img src={hotel.hotel_image_url} alt={hotel.hotel_name} className="w-full h-48 object-cover" />
+                    ) : (
+                      <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                    )}
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <h3 className="font-bold text-xl">{hotel.hotel_name}</h3>
+                      <p className="text-gray-600">{hotel.hotel_address}</p>
+                      <p className="text-orange-600 font-semibold">{hotel.price_per_night}</p>
+                      {hotel.rating && (
+                        <div className="flex items-center">
+                          <span className="text-yellow-400">★</span>
+                          <span className="ml-1">{hotel.rating}/5</span>
+                        </div>
+                      )}
+                      {hotel.google_maps_link && (
+                        <a href={hotel.google_maps_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm mt-2">View Hotel on Google Maps</a>
+                      )}
+                    </div>
+                  </div>
+                ))}
           </div>
         </div>
       )}
@@ -261,33 +293,52 @@ function TripDetailsContent() {
       )}
 
       {/* Cafes & Snack Places */}
-      {tripDetails.cafes_and_snacks && tripDetails.cafes_and_snacks.length > 0 && (
+      {(normalizedCafes.length > 0 || (tripDetails?.cafes_and_snacks && tripDetails.cafes_and_snacks.length > 0)) && (
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-orange-500 mb-4">Cafes & Snack Places</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {tripDetails.cafes_and_snacks.map((cafe, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-                {cafe.image_url ? (
-                  <img src={cafe.image_url} alt={cafe.name} className="w-full h-48 object-cover" />
-                ) : (
-                  <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                )}
-                <div className="p-6 flex-1 flex flex-col justify-between">
-                  <h3 className="font-bold text-xl">{cafe.name}</h3>
-                  <p className="text-gray-600">{cafe.address}</p>
-                  <p className="text-orange-600 font-semibold">{cafe.price_range}</p>
-                  {cafe.rating && (
-                    <div className="flex items-center">
-                      <span className="text-yellow-400">★</span>
-                      <span className="ml-1">{cafe.rating}/5</span>
+            {normalizedCafes.length > 0
+              ? normalizedCafes.map((cafe: any, index: number) => (
+                  <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
+                    <div className="w-full h-48 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center text-gray-400 text-xs">Cafe Image</div>
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <h3 className="font-bold text-xl">{cafe.cafeName}</h3>
+                      <p className="text-gray-600">{cafe.location}</p>
+                      {cafe.cuisine && (
+                        <p className="text-orange-600 font-semibold">{cafe.cuisine}</p>
+                      )}
+                      {cafe.description && (
+                        <p className="text-gray-600 text-sm mt-2">{cafe.description}</p>
+                      )}
+                      {cafe.mapLink && (
+                        <a href={cafe.mapLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm mt-2">☕ View on Google Maps</a>
+                      )}
                     </div>
-                  )}
-                  {cafe.google_maps_link && (
-                    <a href={cafe.google_maps_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm mt-2">View Cafe on Google Maps</a>
-                  )}
-                </div>
-              </div>
-            ))}
+                  </div>
+                ))
+              : tripDetails?.cafes_and_snacks?.map((cafe, index) => (
+                  <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
+                    {cafe.image_url ? (
+                      <img src={cafe.image_url} alt={cafe.name} className="w-full h-48 object-cover" />
+                    ) : (
+                      <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                    )}
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <h3 className="font-bold text-xl">{cafe.name}</h3>
+                      <p className="text-gray-600">{cafe.address}</p>
+                      <p className="text-orange-600 font-semibold">{cafe.price_range}</p>
+                      {cafe.rating && (
+                        <div className="flex items-center">
+                          <span className="text-yellow-400">★</span>
+                          <span className="ml-1">{cafe.rating}/5</span>
+                        </div>
+                      )}
+                      {cafe.google_maps_link && (
+                        <a href={cafe.google_maps_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm mt-2">View Cafe on Google Maps</a>
+                      )}
+                    </div>
+                  </div>
+                ))}
           </div>
         </div>
       )}

@@ -91,6 +91,16 @@ async function enrichWithImages(data: any): Promise<any> {
     );
   }
 
+  // Enrich cafes with image_url field
+  if (data.cafes && Array.isArray(data.cafes)) {
+    data.cafes = await Promise.all(
+      data.cafes.map(async (cafe: any) => ({
+        ...cafe,
+        image_url: await getImageUrl(`${cafe.cafe_name} cafe`, 'restaurant')
+      }))
+    );
+  }
+
   // Enrich itinerary activities with image_url field
   if (data.itinerary && typeof data.itinerary === 'object') {
     for (const day of Object.values(data.itinerary)) {
@@ -155,8 +165,9 @@ JSON Schema:
 const FINAL_PROMPT = `Respond ONLY with valid JSON matching the schema below. Do not add any extra text or comments.
 
 IMPORTANT:
-- Always recommend at least 4-5 hotels and 4-5 restaurants.
+- Always recommend at least 4-5 hotels, 4-5 restaurants, and 3-4 cafes.
 - Provide valid Google Maps URLs and real image URLs for every recommendation.
+- Cafes are casual coffee shops and cafe establishments (separate from full-service restaurants).
 
 Output Schema:
 {
@@ -175,6 +186,10 @@ Output Schema:
     "restaurants": [
       { "name": "string", "cuisine": "string", "price_range": "string", "google_maps_link": "string" },
       { "name": "string", "cuisine": "string", "price_range": "string", "google_maps_link": "string" }
+    ],
+    "cafes": [
+      { "cafe_name": "string", "location": "string", "specialty": "string", "google_maps_link": "string" },
+      { "cafe_name": "string", "location": "string", "specialty": "string", "google_maps_link": "string" }
     ],
     "itinerary": {
       "day_1": {
@@ -318,6 +333,7 @@ export async function POST(req: NextRequest) {
         interests: parsed?.trip_plan?.interests ?? null,
         hotels: parsed?.trip_plan?.hotels ?? [],
         restaurants: parsed?.trip_plan?.restaurants ?? [],
+        cafes: parsed?.trip_plan?.cafes ?? [],
         itinerary: parsed?.trip_plan?.itinerary ?? {},
       },
     };
