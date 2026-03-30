@@ -1,54 +1,49 @@
 'use client';
 
-import { ArrowLeft, Gem } from 'lucide-react';
+import { ArrowLeft, Gem, Loader } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import BlogCard from '../_components/BlogCard';
 
-const hiddenGemsBlogs = [
-  {
-    title: "Top 15 Hidden Gems of India Beyond the Tourist Trail",
-    description: "Discover lesser-known destinations in India that offer authentic cultural experiences and stunning natural beauty away from the crowds.",
-    image: "https://images.unsplash.com/photo-1599182243289-05f2e3c0e2b1?w=500&h=300&fit=crop",
-    link: "https://www.incredibleindia.org/",
-    author: "Incredible India",
-    date: "2024"
-  },
-  {
-    title: "10 Unexplored Destinations in Northeast India",
-    description: "Explore the magical Northeast region with its pristine landscapes, unique culture, and hidden waterfalls.",
-    image: "https://images.unsplash.com/photo-1596181241476-4dcc3f7df42f?w=500&h=300&fit=crop",
-    link: "https://www.thrillophilia.com/northeast-india/",
-    author: "Thrillophilia",
-    date: "2024"
-  },
-  {
-    title: "Hidden Beaches of India: Secrets from the Indian Coast",
-    description: "Find secluded beaches and coastal gems that offer pristine shores and fewer tourists.",
-    image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&h=300&fit=crop",
-    link: "https://www.indiamike.com/",
-    author: "India Mike",
-    date: "2024"
-  },
-  {
-    title: "Offbeat Hill Stations in India You Must Visit",
-    description: "Skip the crowded hill stations and discover quiet, scenic destinations perfect for a peaceful retreat.",
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=300&fit=crop",
-    link: "https://www.bookmyshow.com/travel/offbeat-destinations/",
-    author: "Travel Guide",
-    date: "2024"
-  },
-  {
-    title: "Underrated Forts and Palaces of India: A Historical Journey",
-    description: "Explore ancient forts and palaces that are less visited but equally magnificent and historically important.",
-    image: "https://images.unsplash.com/photo-1548013146-72479768bada?w=500&h=300&fit=crop",
-    link: "https://www.historicalindia.com/",
-    author: "Historical India",
-    date: "2024"
-  },
-];
+interface Blog {
+  title: string;
+  description: string;
+  image: string;
+  link: string;
+  author: string;
+  date: string;
+}
 
 export default function HiddenGems() {
   const router = useRouter();
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/content?category=hidden-gems');
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          setBlogs(result.data);
+        } else {
+          setError('Failed to fetch content');
+          setBlogs([]);
+        }
+      } catch (err) {
+        console.error('Error fetching content:', err);
+        setError('Failed to load content');
+        setBlogs([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContent();
+  }, []);
 
   return (
     <div className="min-h-screen bg-linear-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
@@ -74,11 +69,31 @@ export default function HiddenGems() {
 
       {/* Blog Grid */}
       <div className="max-w-7xl mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {hiddenGemsBlogs.map((blog, index) => (
-            <BlogCard key={index} {...blog} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center items-center min-h-96">
+            <div className="flex flex-col items-center gap-4">
+              <Loader className="w-12 h-12 animate-spin text-orange-500" />
+              <p className="text-gray-600 dark:text-gray-400">Loading hidden gems...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="text-center min-h-96 flex items-center justify-center">
+            <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-6">
+              <p className="text-red-700 dark:text-red-200">Unable to load content at the moment.</p>
+              <p className="text-sm text-red-600 dark:text-red-300 mt-2">Please try again later.</p>
+            </div>
+          </div>
+        ) : blogs.length === 0 ? (
+          <div className="text-center min-h-96 flex items-center justify-center">
+            <p className="text-gray-500 dark:text-gray-400">No content available.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {blogs.map((blog, index) => (
+              <BlogCard key={index} {...blog} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

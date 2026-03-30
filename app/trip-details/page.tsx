@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import React, { Suspense } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { ReviewsSection } from "./_components/ReviewsSection";
 
 type Restaurant = {
   name: string;
@@ -342,6 +343,9 @@ function TripDetailsContent() {
           </div>
         </div>
       )}
+
+      {/* Traveler Reviews & Experiences */}
+      <ReviewsSection destination={tripDetails.destination} />
     </div>
   );
 }

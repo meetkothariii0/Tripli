@@ -1,54 +1,49 @@
 'use client';
 
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles, Loader } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import BlogCard from '../_components/BlogCard';
 
-const inspiredBlogs = [
-  {
-    title: "10 Breathtaking Destinations That Will Transform Your Travel Perspective",
-    description: "Discover the world's most inspiring travel destinations that offer unique cultural experiences, stunning landscapes, and unforgettable memories.",
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=300&fit=crop",
-    link: "https://www.lonelyplanet.com/articles/best-places-to-visit",
-    author: "Lonely Planet",
-    date: "2024"
-  },
-  {
-    title: "How Travel Changed My Life: Real Stories from Adventurers",
-    description: "Read inspiring travel stories from people who've transformed their lives through meaningful journeys around the globe.",
-    image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=500&h=300&fit=crop",
-    link: "https://www.wanderlust.co.uk/",
-    author: "Wanderlust Magazine",
-    date: "2024"
-  },
-  {
-    title: "Solo Travel Tips: Why Traveling Alone is More Rewarding Than You Think",
-    description: "Explore the benefits of solo travel and get practical tips for anyone considering a solo adventure.",
-    image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&h=300&fit=crop",
-    link: "https://www.nomadicmatt.com/travel-blogs/solo-travel/",
-    author: "Nomadic Matt",
-    date: "2024"
-  },
-  {
-    title: "Cultural Immersion: How to Travel Like a Local",
-    description: "Learn how to experience authentic local culture and connect with people during your travels.",
-    image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&h=300&fit=crop",
-    link: "https://www.culinarylocal.com/travel-tips/",
-    author: "Culinary Travels",
-    date: "2024"
-  },
-  {
-    title: "Budget Travel Hacks: Travel More Without Spending More",
-    description: "Discover practical tips and tricks to travel on a budget and make your adventure more affordable.",
-    image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&h=300&fit=crop",
-    link: "https://www.budgetraveller.com/",
-    author: "Budget Traveller",
-    date: "2024"
-  },
-];
+interface Blog {
+  title: string;
+  description: string;
+  image: string;
+  link: string;
+  author: string;
+  date: string;
+}
 
 export default function GetInspired() {
   const router = useRouter();
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/content?category=get-inspired');
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          setBlogs(result.data);
+        } else {
+          setError('Failed to fetch content');
+          setBlogs([]);
+        }
+      } catch (err) {
+        console.error('Error fetching content:', err);
+        setError('Failed to load content');
+        setBlogs([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContent();
+  }, []);
 
   return (
     <div className="min-h-screen bg-linear-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
@@ -74,11 +69,31 @@ export default function GetInspired() {
 
       {/* Blog Grid */}
       <div className="max-w-7xl mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {inspiredBlogs.map((blog, index) => (
-            <BlogCard key={index} {...blog} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center items-center min-h-96">
+            <div className="flex flex-col items-center gap-4">
+              <Loader className="w-12 h-12 animate-spin text-green-500" />
+              <p className="text-gray-600 dark:text-gray-400">Loading inspiring travel content...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="text-center min-h-96 flex items-center justify-center">
+            <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-6">
+              <p className="text-red-700 dark:text-red-200">Unable to load content at the moment.</p>
+              <p className="text-sm text-red-600 dark:text-red-300 mt-2">Please try again later.</p>
+            </div>
+          </div>
+        ) : blogs.length === 0 ? (
+          <div className="text-center min-h-96 flex items-center justify-center">
+            <p className="text-gray-500 dark:text-gray-400">No content available.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {blogs.map((blog, index) => (
+              <BlogCard key={index} {...blog} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
