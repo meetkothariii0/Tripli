@@ -1,354 +1,321 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
+import { resolvePlace, orderActivitiesByNearestNeighbour } from "@/lib/providers/places";
+import { generateMockStays, generateMockRestaurants, generateMockFlights, generateMockTrains } from "@/lib/providers/mockData";
+import { TripPlan, DayItinerary, ActivityItem } from "@/lib/providers/types";
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const PIXABAY_API_KEY = "55105831-5a57a89787f679e2bd7bdbb58"; // Your Pixabay API key
-const PIXABAY_API_URL = "https://pixabay.com/api/";
+const API_KEY = process.env.OPENROUTER_API_KEY || process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || "";
+const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-if (!GROQ_API_KEY) {
-  console.warn("⚠️ GROQ_API_KEY environment variable is not set");
-}
-
-// Function to fetch high-quality images from Pixabay
-async function getImageUrl(query: string, type: string = "place"): Promise<string> {
-  try {
-    // Create targeted search queries based on image type
-    const searchQueries = [];
-    
-    if (type === "hotel") {
-      searchQueries.push(query, `${query} luxury hotel`, `hotel room accommodation`, `modern bedroom interior`);
-    } else if (type === "restaurant") {
-      searchQueries.push(query, `${query} restaurant`, `delicious food cuisine`, `fine dining`);
-    } else if (type === "activity") {
-      searchQueries.push(query, `${query} landmark`, `tourist attraction`, `famous place`);
-    }
-
-    // Try each search query
-    for (const searchQuery of searchQueries) {
-      try {
-        const response = await axios.get(PIXABAY_API_URL, {
-          params: {
-            key: PIXABAY_API_KEY,
-            q: searchQuery,
-            per_page: 20,
-            image_type: 'photo',
-            safesearch: true,
-            order: 'popular'
-          },
-          timeout: 5000
-        });
-
-        if (response.data?.hits && response.data.hits.length > 0) {
-          // Pick a random image from results for variety
-          const randomIndex = Math.floor(Math.random() * Math.min(response.data.hits.length, 10));
-          const image = response.data.hits[randomIndex];
-          
-          if (image?.largeImageURL) {
-            return image.largeImageURL;
-          }
-        }
-      } catch (e) {
-        console.error(`Pixabay search failed for "${searchQuery}":`, e);
-      }
-    }
-  } catch (error) {
-    console.error(`Failed to fetch ${type} image for "${query}":`, error);
-  }
-
-  // Fallback generic images with variety
-  const fallbacks = [
-    { hotel: 'https://cdn.pixabay.com/photo/2016/03/28/09/34/bedroom-1285156_640.jpg', restaurant: 'https://cdn.pixabay.com/photo/2016/06/24/10/47/restaurant-1476820_640.jpg', activity: 'https://cdn.pixabay.com/photo/2016/02/18/22/18/paris-1207605_640.jpg' },
-    { hotel: 'https://cdn.pixabay.com/photo/2017/08/12/17/69/luxury-2633268_640.jpg', restaurant: 'https://cdn.pixabay.com/photo/2017/08/06/14/51/food-2589575_640.jpg', activity: 'https://cdn.pixabay.com/photo/2016/01/09/18/29/landmarks-1130884_640.jpg' },
-    { hotel: 'https://cdn.pixabay.com/photo/2018/01/09/19/47/hotel-3071139_640.jpg', restaurant: 'https://cdn.pixabay.com/photo/2016/04/04/14/12/meal-1307604_640.jpg', activity: 'https://cdn.pixabay.com/photo/2014/07/14/16/54/architectural-391925_640.jpg' },
-  ];
-
-  const randomFallback = fallbacks[Math.floor(Math.random() * fallbacks.length)];
-  return randomFallback[type as keyof typeof randomFallback] || randomFallback.activity;
-}
-
-// Function to enrich data with images
-async function enrichWithImages(data: any): Promise<any> {
-  if (!data) return data;
-
-  // Enrich hotels with hotel_image_url field
-  if (data.hotels && Array.isArray(data.hotels)) {
-    data.hotels = await Promise.all(
-      data.hotels.map(async (hotel: any) => ({
-        ...hotel,
-        hotel_image_url: await getImageUrl(hotel.hotel_name || 'luxury hotel', 'hotel')
-      }))
-    );
-  }
-
-  // Enrich restaurants with image_url field
-  if (data.restaurants && Array.isArray(data.restaurants)) {
-    data.restaurants = await Promise.all(
-      data.restaurants.map(async (restaurant: any) => ({
-        ...restaurant,
-        image_url: await getImageUrl(`${restaurant.name} ${restaurant.cuisine || 'restaurant'}`, 'restaurant')
-      }))
-    );
-  }
-
-  // Enrich cafes with image_url field
-  if (data.cafes && Array.isArray(data.cafes)) {
-    data.cafes = await Promise.all(
-      data.cafes.map(async (cafe: any) => ({
-        ...cafe,
-        image_url: await getImageUrl(`${cafe.cafe_name} cafe`, 'restaurant')
-      }))
-    );
-  }
-
-  // Enrich itinerary activities with image_url field
-  if (data.itinerary && typeof data.itinerary === 'object') {
-    for (const day of Object.values(data.itinerary)) {
-      if (typeof day === 'object' && day !== null && 'activities' in day) {
-        const dayObj = day as any;
-        if (Array.isArray(dayObj.activities)) {
-          dayObj.activities = await Promise.all(
-            dayObj.activities.map(async (activity: any) => ({
-              ...activity,
-              image_url: await getImageUrl(activity.place_name || activity.place_address || 'attraction', 'activity')
-            }))
-          );
-        }
-      }
-    }
-  }
-
-  return data;
-}
-
-// ✅ Use only chat-capable Groq models
-const GROQ_MODELS = [
-  "llama-3.1-8b-instant",
-  "llama-3.3-70b-versatile",
-  "meta-llama/llama-guard-4-12b",
-  "openai/gpt-oss-120b",
-  "openai/gpt-oss-20b",
+const MODELS = [
+  "google/gemini-2.5-flash",
+  "openai/gpt-4o-mini",
+  "meta-llama/llama-3.1-8b-instruct:free"
 ];
-
-const PROMPT = `You are an AI Trip Planner Agent. You must ask the user trip questions in this EXACT order, one at a time:
-
-1. Origin (ui: null): Ask "Where are you traveling from?". Respond ONLY with a valid JSON object.
-2. Destination (ui: null): Ask "Where would you like to go?". Respond ONLY with a valid JSON object.
-3. Group Size (ui: groupSize): Ask "Who will be joining you on this trip?". Respond ONLY with a valid JSON object.
-4. Trip Duration (ui: tripDuration): Ask "How many days will your trip be?". Respond ONLY with a valid JSON object.
-5. Budget (ui: budget): Ask "What's your budget range for this trip?". Respond ONLY with a valid JSON object.
-6. Activities (ui: tripType): Ask "What type of activities do you like?" (Allow multiple options, e.g. sightseeing, adventure, food, shopping, culture, nature, relaxation). Respond ONLY with a valid JSON object.
-7. When all answers are collected, generate the trip plan (ui: final). Respond ONLY with a valid JSON object.
-
-STRICT RULES:
-- Reply ONLY with a valid JSON object matching the schema below.
-- NEVER repeat any previously answered question.
-- NEVER skip the trip duration question.
-- Never include any extra text, explanations, or placeholders.
-- Wait for the user's answer before moving to the next question.
-
-JSON Schema:
-{
-  "resp": "Your next question or response text here",
-  "ui": "null/groupSize/tripDuration/budget/tripType/final",
-  "trip_plan": {
-    "origin": "string or null",
-    "destination": "string or null",
-    "group_size": "string or null",
-    "duration": "string or null",
-    "budget": "string or null",
-    "interests": "string or null"
-  }
-}
-`;
-
-const FINAL_PROMPT = `Respond ONLY with valid JSON matching the schema below. Do not add any extra text or comments.
-
-IMPORTANT:
-- Always recommend at least 4-5 hotels, 4-5 restaurants, and 3-4 cafes.
-- Provide valid Google Maps URLs and real image URLs for every recommendation.
-- Cafes are casual coffee shops and cafe establishments (separate from full-service restaurants).
-
-Output Schema:
-{
-  "trip_plan": {
-    "origin": "string",
-    "destination": "string",
-    "duration": "string",
-    "budget": "string",
-    "group_size": "string",
-    "trip_type": "string",
-    "interests": "string",
-    "hotels": [
-      { "hotel_name": "string", "hotel_address": "string", "price_per_night": "string", "google_maps_link": "string" },
-      { "hotel_name": "string", "hotel_address": "string", "price_per_night": "string", "google_maps_link": "string" }
-    ],
-    "restaurants": [
-      { "name": "string", "cuisine": "string", "price_range": "string", "google_maps_link": "string" },
-      { "name": "string", "cuisine": "string", "price_range": "string", "google_maps_link": "string" }
-    ],
-    "cafes": [
-      { "cafe_name": "string", "location": "string", "specialty": "string", "google_maps_link": "string" },
-      { "cafe_name": "string", "location": "string", "specialty": "string", "google_maps_link": "string" }
-    ],
-    "itinerary": {
-      "day_1": {
-        "day_title": "string",
-        "activities": [
-          {
-            "place_name": "string",
-            "place_address": "string",
-            "place_details": "string",
-            "recommended_activities": ["string"],
-            "google_maps_link": "string",
-            "image_url": "string"
-          }
-        ],
-        "tips": ["string"],
-        "recommended_transport": "string"
-      }
-    }
-  }
-}`;
-
-type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 
 export async function POST(req: NextRequest) {
   try {
-    if (!GROQ_API_KEY) {
-      console.error("Missing GROQ_API_KEY");
-      return NextResponse.json({ error: "API key not configured" }, { status: 500 });
-    }
-
     const body = await req.json();
-    const { messages, isFinal } = body ?? {};
+    const { formData, messages, isFinal } = body;
 
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json({ error: "Messages array is required" }, { status: 400 });
-    }
-    if (!messages.every((m: any) => m?.role && m?.content)) {
-      return NextResponse.json({ error: "Invalid message format" }, { status: 400 });
-    }
+    // Extract trip preferences
+    const rawData = formData || (messages?.[0]?.content ? JSON.parse(messages[0].content) : {});
+    const origin = rawData.origin || "Bengaluru";
+    const destination = rawData.destination || "Goa";
+    const dates = rawData.dates || "Flexible";
+    const tripLength = parseInt(rawData.trip_length || "3", 10) || 3;
+    const totalBudget = rawData.total_budget || "₹30,000 - ₹80,000";
+    const spendingStyle = rawData.spending_style || "Mid-range";
+    const travelers = rawData.travelers || "Couple";
+    const travelStyle = Array.isArray(rawData.travel_style) ? rawData.travel_style.join(", ") : (rawData.travel_style || "Relaxed, Food");
+    const foodPref = rawData.food_pref || "No preference";
+    const transportPref = rawData.transport || "Flight";
+    const pace = rawData.pace || "Balanced";
+    const mustHaves = Array.isArray(rawData.must_haves) ? rawData.must_haves.join(", ") : (rawData.must_haves || "Local markets");
 
-    // ✅ Track answered fields to prevent question repetition
-    const answeredFields = new Set<string>();
-    messages.forEach((m: any) => {
-      if (m.role === "assistant" || m.role === "user") {
-        const parsed = (() => {
-          try {
-            return JSON.parse(m.content);
-          } catch {
-            return {};
+    const systemPrompt = `You are an expert AI travel planner for Tripli. Respond ONLY with valid JSON.
+Requirements:
+1. Output EXACTLY ${tripLength} days in the itinerary array. Day 1 is arrival; Day ${tripLength} is departure.
+2. The trip has a TOTAL BUDGET of "${totalBudget}" AND a SPENDING STYLE of "${spendingStyle}". Balance both simultaneously (e.g. match accommodations, dining tier, and activity costs to this spending style within the total budget).
+3. Origin: ${origin}, Destination: ${destination}, Pace: ${pace}, Travelers: ${travelers}, Food Preference: ${foodPref}.
+4. Must haves: ${mustHaves}. Travel style: ${travelStyle}.
+5. For each day, provide 3 to 5 realistic attractions/places in ${destination}.
+6. For each meal (breakfast, lunch, dinner), suggest a real local restaurant name in ${destination}.
+
+Output JSON Schema:
+{
+  "day_plans": [
+    {
+      "day": 1,
+      "day_title": "string",
+      "local_tip": "string",
+      "recommended_transport": "string",
+      "places": [
+        {
+          "name": "string",
+          "why_this": "string",
+          "estimated_cost": "string",
+          "neighborhood": "string"
+        }
+      ],
+      "meals": {
+        "breakfast": "string",
+        "lunch": "string",
+        "dinner": "string"
+      }
+    }
+  ]
+}`;
+
+    let parsedPlans: any = null;
+
+    if (API_KEY) {
+      for (const model of MODELS) {
+        try {
+          const response = await axios.post(
+            API_URL,
+            {
+              model,
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: `Create a ${tripLength}-day itinerary for ${destination} starting from ${origin}. Budget: ${totalBudget}, Spending Style: ${spendingStyle}.` }
+              ],
+              max_tokens: 3500,
+              response_format: { type: "json_object" }
+            },
+            {
+              headers: { Authorization: `Bearer ${API_KEY}` },
+              timeout: 15000
+            }
+          );
+
+          const content = response.data.choices?.[0]?.message?.content;
+          if (content) {
+            try {
+              parsedPlans = JSON.parse(content);
+              if (parsedPlans?.day_plans || parsedPlans?.itinerary) break;
+            } catch {
+              const match = content.match(/\{[\s\S]*\}/);
+              if (match) {
+                parsedPlans = JSON.parse(match[0]);
+                break;
+              }
+            }
           }
-        })();
-        if (parsed?.trip_plan) {
-          Object.keys(parsed.trip_plan).forEach((key) => {
-            if (parsed.trip_plan[key]) answeredFields.add(key);
+        } catch (err: any) {
+          console.error("AI Generation attempt failed:", err?.message);
+        }
+      }
+    }
+
+    // Fallback if LLM failed or key missing
+    if (!parsedPlans || (!parsedPlans.day_plans && !parsedPlans.itinerary)) {
+      parsedPlans = {
+        day_plans: Array.from({ length: tripLength }).map((_, i) => ({
+          day: i + 1,
+          day_title: i === 0 ? `Arrival & Exploring ${destination}` : i === tripLength - 1 ? `Farewell ${destination}` : `Highlights & Culture in ${destination}`,
+          local_tip: "Start early to avoid tourist rush and stay hydrated.",
+          recommended_transport: "Local Cab / Scooter Rental",
+          places: [
+            { name: `${destination} Beach Promenade`, why_this: "Iconic scenery and vibrant atmosphere", estimated_cost: "Free", neighborhood: "Coastal Area" },
+            { name: `${destination} Heritage Fort & Museum`, why_this: "Fascinating historical viewpoint", estimated_cost: "₹300", neighborhood: "Old Quarter" },
+            { name: `${destination} Sunset Point`, why_this: "Breathtaking panoramic sunset view", estimated_cost: "Free", neighborhood: "Hilltop / Cliff" }
+          ],
+          meals: {
+            breakfast: `Cafe Sol ${destination}`,
+            lunch: `Fisherman's Wharf ${destination}`,
+            dinner: `The Saffron Table ${destination}`
+          }
+        }))
+      };
+    }
+
+    const rawDays = parsedPlans.day_plans || parsedPlans.itinerary || [];
+    // Ensure exact trip length matching
+    const targetDays: any[] = [];
+    for (let i = 0; i < tripLength; i++) {
+      if (rawDays[i]) {
+        targetDays.push(rawDays[i]);
+      } else {
+        targetDays.push({
+          day: i + 1,
+          day_title: `Exploring ${destination} Day ${i + 1}`,
+          local_tip: "Check local timings before visiting.",
+          recommended_transport: "Cab / Auto",
+          places: [
+            { name: `${destination} Central Market`, why_this: "Local spices, handicrafts, and treats", estimated_cost: "Free", neighborhood: "Central" },
+            { name: `${destination} Cultural Center`, why_this: "Art exhibitions and evening music", estimated_cost: "₹200", neighborhood: "Town" }
+          ],
+          meals: {
+            breakfast: `Morning Roast ${destination}`,
+            lunch: `Spice Kitchen ${destination}`,
+            dinner: `The Harbour Grill ${destination}`
+          }
+        });
+      }
+    }
+
+    // ACCURACY RESOLUTION VIA PlacesProvider
+    const resolvedItinerary: DayItinerary[] = [];
+
+    for (let dayIdx = 0; dayIdx < targetDays.length; dayIdx++) {
+      const d = targetDays[dayIdx];
+      const dayNum = dayIdx + 1;
+      const rawPlaces = Array.isArray(d.places) ? d.places : (Array.isArray(d.activities) ? d.activities : []);
+
+      const activityList: ActivityItem[] = [];
+
+      for (let pIdx = 0; pIdx < rawPlaces.length; pIdx++) {
+        const p = rawPlaces[pIdx];
+        const placeName = p.name || p.place_name || `Attraction in ${destination}`;
+        
+        // Resolve through PlacesProvider
+        const resolved = await resolvePlace(placeName, destination);
+
+        if (resolved && resolved.cityMatch) {
+          activityList.push({
+            id: `act-${dayNum}-${pIdx + 1}`,
+            place_name: resolved.name,
+            place_address: resolved.formatted_address,
+            start_time: `${9 + pIdx * 2}:30`,
+            end_time: `${11 + pIdx * 2}:30`,
+            duration: "2 hours",
+            travel_time_from_prev: pIdx === 0 ? "0 mins" : "20 mins",
+            estimated_cost: p.estimated_cost || "₹250",
+            neighborhood: p.neighborhood || destination,
+            google_maps_link: resolved.google_maps_link,
+            why_this: p.why_this || "Recommended highlight of the destination.",
+            rating: resolved.rating,
+            review_count: resolved.user_ratings_total,
+            photo_url: resolved.photos?.[0],
+            place_id: resolved.place_id,
+            lat: resolved.lat,
+            lng: resolved.lng,
+            sourceBadge: resolved.sourceBadge,
+            isLive: resolved.isLive
           });
         }
       }
-    });
 
-    // Build prompt with information about already-answered fields
-    const answeredFieldsList = Array.from(answeredFields).join(", ") || "none";
-    const systemPrompt = isFinal 
-      ? FINAL_PROMPT 
-      : PROMPT + `\n\nAlready answered fields: ${answeredFieldsList}. DO NOT ask about these fields again.`;
+      // If all places were dropped due to mismatch, fallback to a verified place in destination
+      if (activityList.length === 0) {
+        const fallback = await resolvePlace(`${destination} Main Landmark`, destination);
+        activityList.push({
+          id: `act-${dayNum}-1`,
+          place_name: fallback?.name || `${destination} Landmark`,
+          place_address: fallback?.formatted_address || `${destination}`,
+          start_time: "10:00",
+          end_time: "12:30",
+          duration: "2.5 hours",
+          travel_time_from_prev: "0 mins",
+          estimated_cost: "Free",
+          neighborhood: destination,
+          google_maps_link: fallback?.google_maps_link || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination)}`,
+          why_this: "Prime sightseeing point in the destination.",
+          rating: fallback?.rating,
+          review_count: fallback?.user_ratings_total,
+          photo_url: fallback?.photos?.[0],
+          place_id: fallback?.place_id,
+          lat: fallback?.lat,
+          lng: fallback?.lng,
+          sourceBadge: fallback?.sourceBadge || "Sample data",
+          isLive: fallback?.isLive || false
+        });
+      }
 
-    const groqMessages: ChatMessage[] = [
-      { role: "system", content: systemPrompt },
-      ...messages
-        .filter((m: any) => m.role === "user" || m.role === "assistant")
-        .map((m: any) => ({ role: m.role, content: String(m.content) })),
-    ];
+      // Order stops by nearest neighbour to eliminate zig-zagging
+      const orderedActivities = orderActivitiesByNearestNeighbour(activityList);
 
-    let completion: any;
-    let lastError: any;
+      // Resolve Meals
+      const rawMeals = d.meals || {};
+      const bfName = typeof rawMeals.breakfast === "string" ? rawMeals.breakfast : rawMeals.breakfast?.name || `Cafe ${destination}`;
+      const lunchName = typeof rawMeals.lunch === "string" ? rawMeals.lunch : rawMeals.lunch?.name || `Bistro ${destination}`;
+      const dinnerName = typeof rawMeals.dinner === "string" ? rawMeals.dinner : rawMeals.dinner?.name || `Grand Diner ${destination}`;
 
-    for (const model of GROQ_MODELS) {
-      try {
-        const groqResponse = await axios.post(
-          GROQ_API_URL,
-          {
-            model,
-            messages: groqMessages,
-            temperature: 0.7,
-            response_format: { type: "json_object" },
+      const [resBf, resLunch, resDinner] = await Promise.all([
+        resolvePlace(bfName, destination),
+        resolvePlace(lunchName, destination),
+        resolvePlace(dinnerName, destination)
+      ]);
+
+      resolvedItinerary.push({
+        day: dayNum,
+        day_title: d.day_title || `Day ${dayNum} in ${destination}`,
+        activities: orderedActivities,
+        meals: {
+          breakfast: {
+            name: resBf?.name || bfName,
+            address: resBf?.formatted_address || `${destination} Center`,
+            rating: resBf?.rating,
+            photo_url: resBf?.photos?.[0],
+            google_maps_link: resBf?.google_maps_link,
+            place_id: resBf?.place_id,
+            sourceBadge: resBf?.sourceBadge || "Sample data",
+            isLive: resBf?.isLive || false
           },
-          {
-            headers: {
-              Authorization: `Bearer ${GROQ_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            timeout: 60000,
+          lunch: {
+            name: resLunch?.name || lunchName,
+            address: resLunch?.formatted_address || `${destination} Central Area`,
+            rating: resLunch?.rating,
+            photo_url: resLunch?.photos?.[0],
+            google_maps_link: resLunch?.google_maps_link,
+            place_id: resLunch?.place_id,
+            sourceBadge: resLunch?.sourceBadge || "Sample data",
+            isLive: resLunch?.isLive || false
+          },
+          dinner: {
+            name: resDinner?.name || dinnerName,
+            address: resDinner?.formatted_address || `${destination} Dining District`,
+            rating: resDinner?.rating,
+            photo_url: resDinner?.photos?.[0],
+            google_maps_link: resDinner?.google_maps_link,
+            place_id: resDinner?.place_id,
+            sourceBadge: resDinner?.sourceBadge || "Sample data",
+            isLive: resDinner?.isLive || false
           }
-        );
-
-        const aiContent = groqResponse?.data?.choices?.[0]?.message?.content ?? "";
-        if (!aiContent) throw new Error("Empty model response");
-
-        completion = { choices: [{ message: { content: aiContent } }] };
-        break;
-      } catch (err: any) {
-        lastError = err?.response?.data ?? err?.message ?? err;
-        console.error(`Groq error with model: ${model}`, lastError);
-      }
+        },
+        local_tip: d.local_tip || "Carry comfortable walking shoes and cash for small vendors.",
+        recommended_transport: d.recommended_transport || "Walking & Cabs"
+      });
     }
 
-    if (!completion) {
-      return NextResponse.json(
-        { error: "Error from Groq models", details: lastError },
-        { status: 500 }
-      );
-    }
-
-    const rawContent: string = completion.choices[0].message.content;
-    let parsed: any;
-
-    try {
-      parsed = JSON.parse(rawContent);
-    } catch {
-      const match = rawContent.match(/\{[\s\S]*\}/);
-      if (!match) {
-        return NextResponse.json(
-          { error: "Invalid JSON response from AI", rawContent },
-          { status: 500 }
-        );
-      }
-      parsed = JSON.parse(match[0]);
-    }
-
-    // ✅ Console log AI responses for debugging
-    console.log("🤖 AI Response:", JSON.stringify(parsed, null, 2));
-
-    const safeResponse = {
-      resp: typeof parsed?.resp === "string" ? parsed.resp : "",
-      ui: typeof parsed?.ui === "string" ? parsed.ui : "null",
-      trip_plan: {
-        origin: parsed?.trip_plan?.origin ?? null,
-        destination: parsed?.trip_plan?.destination ?? null,
-        duration: parsed?.trip_plan?.duration ?? null,
-        group_size: parsed?.trip_plan?.group_size ?? null,
-        budget: parsed?.trip_plan?.budget ?? null,
-        interests: parsed?.trip_plan?.interests ?? null,
-        hotels: parsed?.trip_plan?.hotels ?? [],
-        restaurants: parsed?.trip_plan?.restaurants ?? [],
-        cafes: parsed?.trip_plan?.cafes ?? [],
-        itinerary: parsed?.trip_plan?.itinerary ?? {},
-      },
+    const tripId = uuidv4();
+    const finalTrip: TripPlan = {
+      id: tripId,
+      origin,
+      destination,
+      duration: `${tripLength} Days`,
+      durationDays: tripLength,
+      dates,
+      budget: totalBudget,
+      spending_style: spendingStyle,
+      group_size: travelers,
+      trip_type: Array.isArray(rawData.travel_style) ? rawData.travel_style[0] : (rawData.travel_style || "Leisure"),
+      travel_style: Array.isArray(rawData.travel_style) ? rawData.travel_style : [rawData.travel_style || "Leisure"],
+      interests: mustHaves,
+      stay_type: Array.isArray(rawData.stay_type) ? rawData.stay_type : [rawData.stay_type || "3-4★ hotel"],
+      food_pref: foodPref,
+      pace,
+      must_haves: Array.isArray(rawData.must_haves) ? rawData.must_haves : [rawData.must_haves || "Beaches"],
+      itinerary: resolvedItinerary,
+      stays: generateMockStays(destination),
+      restaurants: generateMockRestaurants(destination),
+      flights: generateMockFlights(origin, destination, dates),
+      trains: generateMockTrains(origin, destination, dates),
+      createdAt: new Date().toISOString()
     };
 
-    const allowedUI = ["null", "groupSize", "tripDuration", "budget", "tripType", "final"];
-    if (!allowedUI.includes(safeResponse.ui)) safeResponse.ui = "null";
-
-    // Enrich with images if this is the final response
-    if (isFinal && safeResponse.trip_plan) {
-      safeResponse.trip_plan = await enrichWithImages(safeResponse.trip_plan);
-    }
-
-    return NextResponse.json(safeResponse);
-  } catch (e: any) {
-    console.error("Server error:", e);
-    return NextResponse.json({ error: e?.message || "Unknown server error" }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      trip: finalTrip,
+      tripId
+    });
+  } catch (error: any) {
+    console.error("Trip generation handler error:", error);
+    return NextResponse.json(
+      { error: "Failed to generate itinerary", details: error?.message },
+      { status: 500 }
+    );
   }
 }

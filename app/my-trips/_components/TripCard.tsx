@@ -37,8 +37,7 @@ function TripCard({ trip }: TripCardProps) {
     });
   };
 
-  const queryData = encodeURIComponent(JSON.stringify(trip.tripDetail));
-  const viewDetailsLink = `/trip-details?data=${queryData}&tripId=${trip.tripId}`;
+  const viewDetailsLink = `/trip/${trip.tripId}/itinerary`;
 
   return (
     <div className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-blue-200">
