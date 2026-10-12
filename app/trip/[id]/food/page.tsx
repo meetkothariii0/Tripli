@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTrip } from "@/context/TripContext";
@@ -18,7 +18,7 @@ import {
   Sparkles
 } from "lucide-react";
 
-export default function FoodPage() {
+function FoodPageInner() {
   const { trip, loading, addMealToDay, addActivityToDay } = useTrip();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -344,5 +344,13 @@ export default function FoodPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function FoodPage() {
+  return (
+    <Suspense fallback={<div className="py-20 text-center text-gray-400">Loading food options...</div>}>
+      <FoodPageInner />
+    </Suspense>
   );
 }

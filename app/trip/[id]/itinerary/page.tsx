@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTrip } from "@/context/TripContext";
 import { ActivityItem, DayItinerary } from "@/lib/providers/types";
@@ -18,7 +18,7 @@ import {
   AlertCircle
 } from "lucide-react";
 
-export default function ItineraryPage() {
+function ItineraryPageInner() {
   const { trip, loading } = useTrip();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -504,5 +504,13 @@ export default function ItineraryPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ItineraryPage() {
+  return (
+    <Suspense fallback={<div className="py-20 text-center text-gray-400">Loading itinerary...</div>}>
+      <ItineraryPageInner />
+    </Suspense>
   );
 }

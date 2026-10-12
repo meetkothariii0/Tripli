@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTrip } from "@/context/TripContext";
@@ -21,7 +21,7 @@ import {
   Sparkles
 } from "lucide-react";
 
-export default function StaysPage() {
+function StaysPageInner() {
   const { trip, loading, addStayToTrip, addActivityToDay } = useTrip();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -388,5 +388,13 @@ export default function StaysPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function StaysPage() {
+  return (
+    <Suspense fallback={<div className="py-20 text-center text-gray-400">Loading stays...</div>}>
+      <StaysPageInner />
+    </Suspense>
   );
 }
