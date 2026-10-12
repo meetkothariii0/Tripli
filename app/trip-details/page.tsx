@@ -4,6 +4,9 @@ import { Suspense } from "react";
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+// Force Next.js to render this page at request time rather than during static generation.
+export const dynamic = "force-dynamic";
+
 function LegacyTripDetailsRedirectInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
